@@ -1,5 +1,6 @@
-author: denis@dschoener.de
-description: Spark application
+name: spark
+author: denis@dschoner.de
+description: spark app
 version: 1.0
 
 libs_version: ${mos.version}
@@ -8,11 +9,18 @@ mongoose_os_version: ${mos.version}
 
 # Optional. List of tags for online search.
 tags:
+  - spark
   - c
 
 # List of files / directories with C sources. No slashes at the end of dir names.
 sources:
   - src
+  - tps/VL53L0X_1.0.2/Api/platform/src
+  - tps/VL53L0X_1.0.2/Api/core/src
+
+includes:
+  - tps/VL53L0X_1.0.2/Api/platform/inc
+  - tps/VL53L0X_1.0.2/Api/core/inc
 
 # List of dirs. Files from these dirs will be copied to the device filesystem
 filesystem:
@@ -22,37 +30,33 @@ filesystem:
 # Below is a custom firmware configuration example.
 # Uncomment and modify according to your needs:
 
-# config_schema:
-#  - ["my_app", "o", {title: "My app custom settings"}]
-#  - ["my_app.bool_value", "b", false, {title: "Some boolean value"}]
-#  - ["my_app.string_value", "s", "", {title: "Some string value"}]
-#  - ["my_app.int_value", "i", 123, {title: "Some integer value"}]
-
-# These settings get compiled into the C structure, and can be accessed
-# from the C code this way:
-#
-# printf("Hello from %s!\n", mgos_sys_config_get_device_id());
-#
-# Settings are cool: can be modified remotely without full firmware upgrade!
-#
-# To see all available compiled settings, buid the firmware and open
-# build/gen/mgos_config.h file.
-#
-# Also, in this config_schema section, you can override existing
-# settings that has been created by other libraries. For example, debug log
-# level is 2 by default. For this firmware we can override it to 3:
-#
-# config_schema:
-#  - ["debug.level", 3]
-
+config_schema:
+ - ["spark",                    "o",        {title: "app settings"}]
+ - ["spark.gpio_vl53l0x_xshut", "i",     6, {title: "VL53L0X XSHUT pin"}]
+ - ["spark.gpio_vl53l0x_int",   "i",     7, {title: "VL53L0X interrupt pin"}]
+ - ["spark.gpio_tmp102_alt",    "i",     8, {title: "TMP102 ALT pin"}]
+ - ["spark.timeout_temp",       "i", 10000, {title: "timeout for temperature measurement in milliseconds"}]
+ - ["spark.timeout_dist",       "i",  5000, {title: "timeout for distance measurement in milliseconds"}]
+ 
+conds:
+  - when: build_vars.MGOS_ENABLE_I2C_GPIO == "1"
+    apply:
+      config_schema:
+        - ["i2c.sda_gpio", 4]
+        - ["i2c.scl_gpio", 5]
+        
 
 # List of libraries used by this app, in order of initialisation
 libs:
   - origin: https://github.com/mongoose-os-libs/ca-bundle
   - origin: https://github.com/mongoose-os-libs/rpc-service-config
   - origin: https://github.com/mongoose-os-libs/rpc-service-fs
+  - origin: https://github.com/mongoose-os-libs/rpc-service-i2c
   - origin: https://github.com/mongoose-os-libs/rpc-uart
   - origin: https://github.com/mongoose-os-libs/wifi
+  - origin: https://github.com/mongoose-os-libs/i2c
+  - origin: https://github.com/mongoose-os-libs/mqtt
+  - origin: https://github.com/mongoose-os-libs/adc
 
 # Used by the mos tool to catch mos binaries incompatible with this file format
 manifest_version: 2017-05-18
