@@ -32,9 +32,9 @@ filesystem:
 
 config_schema:
  - ["spark",                    "o",        {title: "app settings"}]
- - ["spark.gpio_vl53l0x_xshut", "i",     6, {title: "VL53L0X XSHUT pin"}]
- - ["spark.gpio_vl53l0x_int",   "i",     7, {title: "VL53L0X interrupt pin"}]
- - ["spark.gpio_tmp102_alt",    "i",     8, {title: "TMP102 ALT pin"}]
+ - ["spark.gpio_vl53l0x_xshut", "i",     2, {title: "VL53L0X XSHUT pin"}]
+ - ["spark.gpio_vl53l0x_int",   "i",     0, {title: "VL53L0X interrupt pin"}]
+ - ["spark.gpio_tmp102_alt",    "i",    14, {title: "TMP102 ALT pin"}]
  - ["spark.timeout_temp",       "i", 10000, {title: "timeout for temperature measurement in milliseconds"}]
  - ["spark.timeout_dist",       "i",  5000, {title: "timeout for distance measurement in milliseconds"}]
  
