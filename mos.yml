@@ -7,6 +7,8 @@ libs_version: ${mos.version}
 modules_version: ${mos.version}
 mongoose_os_version: ${mos.version}
 
+platforms: [ esp8266 ]
+
 # Optional. List of tags for online search.
 tags:
   - spark
@@ -37,14 +39,11 @@ config_schema:
  - ["spark.gpio_tmp102_alt",    "i",    14, {title: "TMP102 ALT pin"}]
  - ["spark.timeout_temp",       "i", 10000, {title: "timeout for temperature measurement in milliseconds"}]
  - ["spark.timeout_dist",       "i",  5000, {title: "timeout for distance measurement in milliseconds"}]
+
+ - ["i2c.enable",   true]
+ - ["i2c.sda_gpio", 4]
+ - ["i2c.scl_gpio", 5]
  
-conds:
-  - when: build_vars.MGOS_ENABLE_I2C_GPIO == "1"
-    apply:
-      config_schema:
-        - ["i2c.sda_gpio", 4]
-        - ["i2c.scl_gpio", 5]
-        
 
 # List of libraries used by this app, in order of initialisation
 libs:
@@ -55,8 +54,8 @@ libs:
   - origin: https://github.com/mongoose-os-libs/rpc-uart
   - origin: https://github.com/mongoose-os-libs/wifi
   - origin: https://github.com/mongoose-os-libs/i2c
-  - origin: https://github.com/mongoose-os-libs/mqtt
-  - origin: https://github.com/mongoose-os-libs/adc
+#  - origin: https://github.com/mongoose-os-libs/mqtt
+#  - origin: https://github.com/mongoose-os-libs/adc
 
 # Used by the mos tool to catch mos binaries incompatible with this file format
 manifest_version: 2017-05-18
