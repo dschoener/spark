@@ -25,11 +25,11 @@ static VL53L0X_DeviceInfo_t device_info;
 		LOG(LL_ERROR, (STR " (%s)", str)); \
 	}}
 
-static void i2c_vl53l0x_interrupt_handler(int pin, void *arg)
-{
-	(void) arg;
-	(void) pin;
-}
+//static void i2c_vl53l0x_interrupt_handler(int pin, void *arg)
+//{
+//	(void) arg;
+//	(void) pin;
+//}
 
 static bool i2c_vl53l0x_is_device_initialized()
 {
@@ -43,11 +43,14 @@ bool i2c_vl53l0x_check_device()
 	VL53L0X_Error rv = VL53L0X_GetDeviceErrorStatus(&device_comm_params,
 			&device_err);
 
+	LOG_ON_ERR("Failed to get device error status", rv);
+
 	if (rv == VL53L0X_ERROR_NONE)
 	{
 		if (device_err == VL53L0X_DEVICEERROR_NONE)
 		{
 			success = true;
+			LOG(LL_DEBUG, ("Device successfully checked"));
 		}
 		else
 		{
@@ -57,14 +60,17 @@ bool i2c_vl53l0x_check_device()
 			LOG_ON_ERR("Failed to get device error string", rv);
 		}
 	}
+
 	return success;
 }
 
 bool i2c_vl53l0x_enable_device(bool enable)
 {
-	const int gpio_xshut = get_cfg()->spark.gpio_vl53l0x_xshut;
+	const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
 	const bool enabled = mgos_gpio_read(gpio_xshut);
 	bool success = true;
+
+	LOG(LL_DEBUG, ("GPIO XSHUT: %s", (enabled) ? "enabled" : "disabled"));
 
 	if (enabled != enable)
 	{
@@ -75,10 +81,13 @@ bool i2c_vl53l0x_enable_device(bool enable)
 			// Wait until device has booted
 			if (success)
 			{
-				const VL53L0X_Error rv = VL53L0X_WaitDeviceBooted(
-						&device_comm_params);
-				success = (rv == VL53L0X_ERROR_NONE);
-				LOG_ON_ERR("Failed to wait for device boot", rv);
+				// wait until device comes up
+				// TODO is a workaround
+				mgos_usleep(20000);
+//				const VL53L0X_Error rv = VL53L0X_WaitDeviceBooted(
+//						&device_comm_params);
+//				success = (rv == VL53L0X_ERROR_NONE);
+//				LOG_ON_ERR("Failed to wait for device boot", rv);
 			}
 
 			if (success)
@@ -129,6 +138,11 @@ bool i2c_vl53l0x_init()
 
 	bool success = (i2c != NULL);
 
+	if (!success)
+	{
+		LOG(LL_ERROR, ("I2C interface not ready"));
+	}
+
 	if (success)
 	{
 		memset(&device_comm_params, 0, sizeof(device_comm_params));
@@ -136,21 +150,36 @@ bool i2c_vl53l0x_init()
 		device_comm_params.comms_type = I2C;
 		device_comm_params.comms_speed_khz = mgos_i2c_get_freq(i2c) / 1000; // Hz -> kHz
 
+		LOG(LL_DEBUG, ("I2C frequency is set to %d kHz", device_comm_params.comms_speed_khz));
+
 		// configure XSHUT pin.
-		const int gpio_xshut = get_cfg()->spark.gpio_vl53l0x_xshut;
-		success = mgos_gpio_set_mode(gpio_xshut, MGOS_GPIO_MODE_OUTPUT)
-				&& mgos_gpio_set_pull(gpio_xshut, MGOS_GPIO_PULL_DOWN);
+		const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
+		success = mgos_gpio_set_mode(gpio_xshut, MGOS_GPIO_MODE_OUTPUT);
+
+		mgos_gpio_write(gpio_xshut, false);
+
+		success = success && (mgos_gpio_read(gpio_xshut) == false);
+
+		if (!success)
+		{
+			LOG(LL_ERROR, ("Failed to init GPIO XSHUT (%d)", gpio_xshut));
+		}
 	}
 
-	if (success)
-	{
-		// add interrupt handler for device signalling
-		const int gpio_int = get_cfg()->spark.gpio_vl53l0x_int;
-		success = mgos_gpio_set_mode(gpio_int, MGOS_GPIO_MODE_INPUT) &&
-				mgos_gpio_set_pull(gpio_int, MGOS_GPIO_PULL_DOWN) &&
-				mgos_gpio_set_int_handler(gpio_int, MGOS_GPIO_INT_EDGE_POS,	i2c_vl53l0x_interrupt_handler, NULL) &&
-				mgos_gpio_enable_int(gpio_int);
-	}
+//	if (success)
+//	{
+//		// add interrupt handler for device signalling
+//		const int gpio_int = mgos_sys_config_get_spark_gpio_vl53l0x_int();
+//		success = mgos_gpio_set_mode(gpio_int, MGOS_GPIO_MODE_INPUT) &&
+//				mgos_gpio_set_pull(gpio_int, MGOS_GPIO_PULL_DOWN) &&
+//				mgos_gpio_set_int_handler(gpio_int, MGOS_GPIO_INT_EDGE_POS,	i2c_vl53l0x_interrupt_handler, NULL) &&
+//				mgos_gpio_enable_int(gpio_int);
+//
+//		if (!success)
+//		{
+//			LOG(LL_ERROR, ("Failed to init GPIO Interrupt"));
+//		}
+//	}
 
 	if (success)
 	{
@@ -237,7 +266,7 @@ void i2c_vl53l0x_final()
 	memset(&device_comm_params, 0, sizeof(device_comm_params));
 	i2c_vl53l0x_enable_device(false);
 	// disable interrupt handler
-	const int gpio_int = get_cfg()->spark.gpio_vl53l0x_int;
+	const int gpio_int = mgos_sys_config_get_spark_gpio_vl53l0x_int();
 	mgos_gpio_enable_int(gpio_int);
 }
 

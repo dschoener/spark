@@ -59,38 +59,38 @@ static void cb_timeout_temperature(void *param)
 	{
 		spark_measurement_info.prev_temperature = spark_measurement_info.cur_temperature;
 		spark_measurement_info.cur_temperature = data;
-		LOG(LL_DEBUG, ("new data temperature: %d", data));
+		LOG(LL_DEBUG, ("new data temperature: %2.1fC", data));
 		mgos_set_timer(1, 0, cb_timeout_validate_data, NULL);
 	}
 }
 
-static void cb_timeout_distance(void *param)
-{
-	(void)param;
-	LOG(LL_DEBUG, ("timeout elapsed for distance sensor"));
-	bool success = i2c_vl53l0x_enable_device(true);
-
-	if (success)
-	{
-		success = i2c_vl53l0x_check_device();
-	}
-
-	i2c_vl53l0x_ranging_measurement_data data;
-	if (success)
-	{
-		success = i2c_vl53l0x_get_new_range(&data);
-	}
-
-	if (success)
-	{
-		spark_measurement_info.prev_distance = spark_measurement_info.cur_distance;
-		spark_measurement_info.cur_distance = data;
-		LOG(LL_DEBUG, ("new data distance: %d (%x)", data.RangeMilliMeter, data.RangeStatus));
-		mgos_set_timer(1, 0, cb_timeout_validate_data, NULL);
-	}
-
-	i2c_vl53l0x_enable_device(false);
-}
+//static void cb_timeout_distance(void *param)
+//{
+//	(void)param;
+//	LOG(LL_DEBUG, ("timeout elapsed for distance sensor"));
+//	bool success = i2c_vl53l0x_enable_device(true);
+//
+//	if (success)
+//	{
+//		success = i2c_vl53l0x_check_device();
+//	}
+//
+//	i2c_vl53l0x_ranging_measurement_data data;
+//	if (success)
+//	{
+//		success = i2c_vl53l0x_get_new_range(&data);
+//	}
+//
+//	if (success)
+//	{
+//		spark_measurement_info.prev_distance = spark_measurement_info.cur_distance;
+//		spark_measurement_info.cur_distance = data;
+//		LOG(LL_DEBUG, ("new data distance: %d (%x)", data.RangeMilliMeter, data.RangeStatus));
+//		mgos_set_timer(1, 0, cb_timeout_validate_data, NULL);
+//	}
+//
+//	i2c_vl53l0x_enable_device(false);
+//}
 
 void spark_process_data()
 {
@@ -104,14 +104,17 @@ void spark_process_data()
 
 bool spark_timers_init()
 {
-	spark_timer_info[sensor_temperature].timeout_ms = get_cfg()->spark.timeout_temp;
+	spark_timer_info[sensor_temperature].timeout_ms = mgos_sys_config_get_spark_timeout_temp();
 	spark_timer_info[sensor_temperature].id = mgos_set_timer(
 			spark_timer_info[sensor_temperature].timeout_ms,
 			MGOS_TIMER_REPEAT, cb_timeout_temperature, NULL);
-	spark_timer_info[sensor_distance].timeout_ms = get_cfg()->spark.timeout_dist;
-	spark_timer_info[sensor_distance].id = mgos_set_timer(
-			spark_timer_info[sensor_distance].timeout_ms,
-			MGOS_TIMER_REPEAT, cb_timeout_distance, NULL);
+	LOG(LL_DEBUG, ("Timer [%d] for temperature sensor set (%d ms)",
+			spark_timer_info[sensor_temperature].timeout_ms,
+			spark_timer_info[sensor_temperature].id));
+//	spark_timer_info[sensor_distance].timeout_ms = mgos_sys_config_get_spark_timeout_dist();
+//	spark_timer_info[sensor_distance].id = mgos_set_timer(
+//			spark_timer_info[sensor_distance].timeout_ms,
+//			MGOS_TIMER_REPEAT, cb_timeout_distance, NULL);
 	return true;
 }
 
@@ -122,6 +125,7 @@ enum mgos_app_init_result mgos_app_init(void)
 	memset(&spark_measurement_info, 0, sizeof(spark_measurement_info));
 
 	bool success = (MGOS_INIT_OK == mgos_gpio_init());
+	LOG_INIT_STATE(success, "GPIO interface");
 
 	if (success)
 	{
@@ -135,11 +139,11 @@ enum mgos_app_init_result mgos_app_init(void)
 		LOG_INIT_STATE(success, "I2C interface");
 	}
 
-	if (success)
-	{
-		success = i2c_vl53l0x_init();
-		LOG_INIT_STATE(success, "distance sensor");
-	}
+//	if (success)
+//	{
+//		success = i2c_vl53l0x_init();
+//		LOG_INIT_STATE(success, "distance sensor");
+//	}
 
 	if (success)
 	{

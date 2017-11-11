@@ -67,6 +67,8 @@ const uint8_t I2C_TMP102_CR_CONVERSIONRATE_8HZ = 0X03;
 		I2C_TMP102_CR_EM(I2C_TMP102_CR_EXTENDEDMODE_DISABLE), \
 		I2C_TMP102_CR_CR(I2C_TMP102_CR_CONVERSIONRATE_025HZ))
 
+const float TMP102_CELCIUS_DEGREE_PER_BIT = 0.0625f;
+
 bool i2c_tmp102_write(uint8_t reg, uint16_t val)
 {
 	struct mgos_i2c * i2c = mgos_i2c_get_global();
@@ -136,7 +138,8 @@ bool i2c_tmp102_get_temperature(i2c_tmp102_temperature_t * temp)
 		success = i2c_tmp102_read(I2C_TMP102_PR_TEMPERATURE, &_temp);
 		if (success)
 		{
-			*temp = _temp;
+			_temp = (((_temp) << 4) & 0x0ff0) | (((_temp) >> 12) & 0x000f);
+			*temp = TMP102_CELCIUS_DEGREE_PER_BIT * _temp;
 		}
 	}
 

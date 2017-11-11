@@ -12,7 +12,7 @@
 
 #include <mgos.h>
 
-typedef uint16_t i2c_tmp102_temperature_t;
+typedef float i2c_tmp102_temperature_t;
 
 /**
  * Initializes the TMP102 device I2C communication.
