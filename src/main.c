@@ -139,11 +139,11 @@ enum mgos_app_init_result mgos_app_init(void)
 		LOG_INIT_STATE(success, "I2C interface");
 	}
 
-//	if (success)
-//	{
-//		success = i2c_vl53l0x_init();
-//		LOG_INIT_STATE(success, "distance sensor");
-//	}
+	if (success)
+	{
+		success = i2c_vl53l0x_init();
+		LOG_INIT_STATE(success, "distance sensor");
+	}
 
 	if (success)
 	{
@@ -165,6 +165,7 @@ enum mgos_app_init_result mgos_app_init(void)
 	else
 	{
 		LOG(LL_ERROR, ("Failed to start app"));
+		mgos_msleep(10);
 		return MGOS_APP_INIT_ERROR;
 	}
 }

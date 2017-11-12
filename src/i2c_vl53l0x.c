@@ -13,7 +13,7 @@
 #include <vl53l0x_api.h>
 #include <assert.h>
 
-const uint8_t I2C_VL53L0X_DEVICE_ADDR = 0x52;
+const uint8_t I2C_VL53L0X_DEVICE_ADDR = 0x29;
 const uint8_t I2C_VL53L0X_DEVICE_ADDR_INVALID = 0;
 
 static VL53L0X_Dev_t device_comm_params;
@@ -64,6 +64,36 @@ bool i2c_vl53l0x_check_device()
 	return success;
 }
 
+static bool i2c_vl53l0x_read(uint8_t reg, uint8_t * data, size_t len)
+{
+	struct mgos_i2c * i2c = mgos_i2c_get_global();
+	assert(i2c != NULL);
+
+	return mgos_i2c_write(i2c, I2C_VL53L0X_DEVICE_ADDR, &reg, sizeof(reg), true) &&
+		mgos_i2c_read(i2c, I2C_VL53L0X_DEVICE_ADDR, data, len, true);
+}
+
+static bool i2c_vl53l0x_validate_test_register(uint8_t reg, uint16_t value, size_t len)
+{
+	assert(len <= 2);
+	uint16_t readValue = 0x0000;
+	bool success = i2c_vl53l0x_read(reg, (uint8_t*)&readValue, len);
+	if (success)
+	{
+		if (len == 2)
+		{
+			// MSB will be sent first!
+			readValue = ((readValue >> 8) & 0xff) | ((readValue & 0xff) << 8);
+		}
+		success = (readValue == value);
+		if (!success)
+		{
+			LOG(LL_ERROR, ("Register validation failed: %x != %x", readValue, value));
+		}
+	}
+	return success;
+}
+
 bool i2c_vl53l0x_enable_device(bool enable)
 {
 	const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
@@ -83,7 +113,7 @@ bool i2c_vl53l0x_enable_device(bool enable)
 			{
 				// wait until device comes up
 				// TODO is a workaround
-				mgos_usleep(20000);
+				mgos_usleep(40000);
 //				const VL53L0X_Error rv = VL53L0X_WaitDeviceBooted(
 //						&device_comm_params);
 //				success = (rv == VL53L0X_ERROR_NONE);
@@ -155,15 +185,7 @@ bool i2c_vl53l0x_init()
 		// configure XSHUT pin.
 		const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
 		success = mgos_gpio_set_mode(gpio_xshut, MGOS_GPIO_MODE_OUTPUT);
-
 		mgos_gpio_write(gpio_xshut, false);
-
-		success = success && (mgos_gpio_read(gpio_xshut) == false);
-
-		if (!success)
-		{
-			LOG(LL_ERROR, ("Failed to init GPIO XSHUT (%d)", gpio_xshut));
-		}
 	}
 
 //	if (success)
@@ -184,6 +206,19 @@ bool i2c_vl53l0x_init()
 	if (success)
 	{
 		success = i2c_vl53l0x_enable_device(true);
+	}
+
+	if (success)
+	{
+		success = i2c_vl53l0x_validate_test_register(0xC0, 0xEE,   1) &&
+			i2c_vl53l0x_validate_test_register(0xC1, 0xAA,   1) &&
+			i2c_vl53l0x_validate_test_register(0xC2, 0x10,   1) &&
+			i2c_vl53l0x_validate_test_register(0x51, 0x0099, 2) &&
+			i2c_vl53l0x_validate_test_register(0x61, 0x0000, 2);
+		if (!success)
+		{
+			LOG(LL_ERROR, ("Failed to validate VL53L0X test registers"));
+		}
 	}
 
 	if (success)
@@ -264,9 +299,9 @@ void i2c_vl53l0x_final()
 	device_comm_params.comms_type = 0;
 	device_comm_params.comms_speed_khz = 0;
 	memset(&device_comm_params, 0, sizeof(device_comm_params));
-	i2c_vl53l0x_enable_device(false);
-	// disable interrupt handler
-	const int gpio_int = mgos_sys_config_get_spark_gpio_vl53l0x_int();
-	mgos_gpio_enable_int(gpio_int);
+//	i2c_vl53l0x_enable_device(false);
+//	// disable interrupt handler
+//	const int gpio_int = mgos_sys_config_get_spark_gpio_vl53l0x_int();
+//	mgos_gpio_enable_int(gpio_int);
 }
 

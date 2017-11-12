@@ -30,27 +30,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _VL53L0X_PLATFORM_LOG_H_
 #define _VL53L0X_PLATFORM_LOG_H_
 
+#include <mgos.h>
+
 /* LOG Functions */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * @file vl53l0x_platform_log.h
- *
- * @brief platform log function definition
- */
-
-//#define VL53L0X_LOG_ENABLE 0
+#define VL53L0X_LOG_ENABLE 0
 
 enum {
-    TRACE_LEVEL_NONE,
-    TRACE_LEVEL_ERRORS,
-    TRACE_LEVEL_WARNING,
-    TRACE_LEVEL_INFO,
-    TRACE_LEVEL_DEBUG,
-    TRACE_LEVEL_ALL,
+    TRACE_LEVEL_NONE = LL_NONE,
+    TRACE_LEVEL_ERRORS = LL_ERROR,
+    TRACE_LEVEL_WARNING = LL_WARN,
+    TRACE_LEVEL_INFO = LL_INFO,
+    TRACE_LEVEL_DEBUG = LL_DEBUG,
+    TRACE_LEVEL_ALL = LL_VERBOSE_DEBUG,
     TRACE_LEVEL_IGNORE
 };
 
@@ -70,32 +66,21 @@ enum {
 
 #ifdef VL53L0X_LOG_ENABLE
 
-#include <sys/time.h>
+#define VL53L0X_trace_config(...) (void)0
 
-extern uint32_t _trace_level;
+#define trace_print_module_function(...) (void)0;
 
-
-
-int32_t VL53L0X_trace_config(char *filename, uint32_t modules, uint32_t level, uint32_t functions);
-
-void trace_print_module_function(uint32_t module, uint32_t level, uint32_t function, const char *format, ...);
-
-
-//extern FILE * log_file;
-
-#define LOG_GET_TIME() (int)clock()
 
 #define _LOG_FUNCTION_START(module, fmt, ... ) \
-        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%ld <START> %s "fmt"\n", LOG_GET_TIME(), __FUNCTION__, ##__VA_ARGS__);
+        LOG (LL_VERBOSE_DEBUG, ("<START> "fmt, ##__VA_ARGS__))
 
 #define _LOG_FUNCTION_END(module, status, ... )\
-        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%ld <END> %s %d\n", LOG_GET_TIME(), __FUNCTION__, (int)status, ##__VA_ARGS__)
+		LOG (LL_VERBOSE_DEBUG, ("<END> status:%d\n", (int)status))
 
 #define _LOG_FUNCTION_END_FMT(module, status, fmt, ... )\
-        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%ld <END> %s %d "fmt"\n", LOG_GET_TIME(),  __FUNCTION__, (int)status,##__VA_ARGS__)
+		LOG (LL_VERBOSE_DEBUG, ("<END> status:%d "fmt, (int)status, ##__VA_ARGS__))
 
-// __func__ is gcc only
-//#define VL53L0X_ErrLog( fmt, ...)  fprintf(stderr, "VL53L0X_ErrLog %s" fmt "\n", __func__, ##__VA_ARGS__)
+#define VL53L0X_ErrLog( fmt, ...)  LOG(LL_ERROR, (fmt, ##__VA_ARGS__))
 
 #else /* VL53L0X_LOG_ENABLE no logging */
     #define VL53L0X_ErrLog(...) (void)0

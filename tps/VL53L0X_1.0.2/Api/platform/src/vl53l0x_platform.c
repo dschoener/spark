@@ -351,7 +351,6 @@ int32_t VL53L0X_read_word(uint8_t address,  uint8_t index, uint16_t *pdata)
 
 	const bool success = mgos_i2c_read_reg_n(i2c, (uint16_t)address, index, sizeof(uint16_t), (uint8_t*)pdata);
 	return (success) ? RV_SUCCESS : RV_FAILED;
-
 }
 
 int32_t VL53L0X_read_dword(uint8_t address, uint8_t index, uint32_t *pdata)
