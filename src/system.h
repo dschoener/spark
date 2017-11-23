@@ -21,5 +21,4 @@ temperature_t sys_get_temperature();
  */
 void sys_set_temperature(temperature_t temp);
 
-
 #endif /* SRC_SYSTEM_H_ */

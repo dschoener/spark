@@ -11,6 +11,7 @@
 #include <mgos.h>
 
 #include "types.h"
+#include "vl53l0x_types.h"
 
 typedef struct
 {

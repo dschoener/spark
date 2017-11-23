@@ -17,7 +17,7 @@
 const uint8_t I2C_VL53L0X_DEVICE_ADDR = 0x29;
 const uint8_t I2C_VL53L0X_DEVICE_ADDR_INVALID = 0;
 
-static VL53L0X_Dev_t device_comm_params;
+static VL53L0X_Dev_t device_config;
 static VL53L0X_DeviceInfo_t device_info;
 static i2c_vl53l0x_calibration_info device_calibration =
 { true, 0, 0, true, 0, 0 };
@@ -28,6 +28,29 @@ static i2c_vl53l0x_calibration_info device_calibration =
 		LOG(LL_ERROR, (STR " (%s)", str)); \
 	}}
 
+/// Fixpoint 16.16 factor
+static const float FIXPOINT1616_FACT = ((float)(1 << 16));
+
+/**
+ * Converts a FixPoint1616_t value to a float value.
+ * @param fp1616 FixPoint1616_t value to be converted.
+ * @return According float value.
+ */
+inline static float fixpoint1616_to_float(FixPoint1616_t fp1616)
+{
+	return (float)(fp1616 / FIXPOINT1616_FACT);
+}
+
+/**
+ * Converts a float value to a FixPoint1616_t value.
+ * @param value Float value to be converted.
+ * @return According FixPoint1616_t value.
+ */
+inline static FixPoint1616_t float_to_fixpoint1616(float value)
+{
+	return (FixPoint1616_t)(value * FIXPOINT1616_FACT);
+}
+
 //static void i2c_vl53l0x_interrupt_handler(int pin, void *arg)
 //{
 //	(void) arg;
@@ -36,13 +59,13 @@ static i2c_vl53l0x_calibration_info device_calibration =
 
 static bool i2c_vl53l0x_is_device_initialized()
 {
-	return (device_comm_params.I2cDevAddr != I2C_VL53L0X_DEVICE_ADDR_INVALID);
+	return (device_config.I2cDevAddr != I2C_VL53L0X_DEVICE_ADDR_INVALID);
 }
 
 bool i2c_vl53l0x_check_device()
 {
 	VL53L0X_DeviceError device_err = VL53L0X_DEVICEERROR_NONE;
-	VL53L0X_Error rv = VL53L0X_GetDeviceErrorStatus(&device_comm_params,
+	VL53L0X_Error rv = VL53L0X_GetDeviceErrorStatus(&device_config,
 			&device_err);
 
 	LOG_ON_ERR("Failed to get device error status", rv);
@@ -137,7 +160,7 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 			if (success && on_reset)
 			{
 				LOG(LL_DEBUG, ("Data initialization"));
-				const VL53L0X_Error rv = VL53L0X_DataInit(&device_comm_params);
+				const VL53L0X_Error rv = VL53L0X_DataInit(&device_config);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to init device data", rv);
 			}
@@ -146,7 +169,7 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 			{
 				LOG(LL_DEBUG, ("Static initialization"));
 				const VL53L0X_Error rv = VL53L0X_StaticInit(
-						&device_comm_params);
+						&device_config);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to static init device", rv);
 			}
@@ -155,7 +178,7 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 			{
 				LOG(LL_DEBUG, ("Performing SPAD calibration"));
 				const VL53L0X_Error rv = VL53L0X_PerformRefSpadManagement(
-						&device_comm_params, &device_calibration.RefSpadCount,
+						&device_config, &device_calibration.RefSpadCount,
 						&device_calibration.IsApertureSpads);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to perform SPAD calibration", rv);
@@ -170,13 +193,13 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 			{
 				LOG(LL_DEBUG, ("Performing refernce calibration"));
 				const VL53L0X_Error rv = VL53L0X_PerformRefCalibration(
-						&device_comm_params, &device_calibration.VhvSettings,
+						&device_config, &device_calibration.VhvSettings,
 						&device_calibration.PhaseCalibration);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to perform reference calibration", rv);
 				if (success)
 				{
-					LOG(LL_DEBUG, ("Reference calibration: VhvSettings=%d, PhaseCalibration=%d",
+					LOG(LL_DEBUG, ("Reference calibration: VhvSets=%d, PhaseCalibration=%d",
 							device_calibration.VhvSettings, device_calibration.PhaseCalibration));
 					device_calibration.Temperature = sys_get_temperature();
 				}
@@ -184,10 +207,10 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 
 			if (success)
 			{
-				LOG(LL_DEBUG, ("Setting power mode"));
+				LOG(LL_DEBUG, ("Set power mode"));
 				// set power mode
 				const VL53L0X_Error rv = VL53L0X_SetPowerMode(
-						&device_comm_params,
+						&device_config,
 						VL53L0X_POWERMODE_STANDBY_LEVEL1);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to set device power mode", rv);
@@ -195,9 +218,9 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 
 			if (success)
 			{
-				LOG(LL_DEBUG, ("Setting device mode"));
+				LOG(LL_DEBUG, ("Set device mode"));
 				const VL53L0X_Error rv = VL53L0X_SetDeviceMode(
-						&device_comm_params,
+						&device_config,
 						VL53L0X_DEVICEMODE_SINGLE_RANGING);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to set device mode", rv);
@@ -205,8 +228,46 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 
 //			if (success)
 //			{
-//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(Dev, LimitCheckId, LimitCheckEnable);
+//				LOG(LL_DEBUG, ("Set power mode"));
+//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
+//						VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+//				success = (rv == VL53L0X_ERROR_NONE);
+//				LOG_ON_ERR("Failed to enable sigma limit check", rv);
 //			}
+//
+//			if (success)
+//			{
+//				LOG(LL_DEBUG, ("Enable sigma limit check value"));
+//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckValue(&device_config,
+//						VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, float_to_fixpoint1616(2000));
+//				success = (rv == VL53L0X_ERROR_NONE);
+//				LOG_ON_ERR("Failed to enable sigma limit check value", rv);
+//			}
+//
+//			if (success)
+//			{
+//				LOG(LL_DEBUG, ("Enable signal rate limit check"));
+//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
+//						VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
+//				success = (rv == VL53L0X_ERROR_NONE);
+//				LOG_ON_ERR("Failed to enable signal rate limit check", rv);
+//			}
+//
+//			if (success)
+//			{
+//				LOG(LL_DEBUG, ("Enable range ignore threshold limit check"));
+//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
+//						VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, 1);
+//				success = (rv == VL53L0X_ERROR_NONE);
+//				LOG_ON_ERR("Failed to enable range ignore threshold limit check", rv);
+//			}
+
+			if (success)
+			{
+				// check current error state
+				LOG(LL_DEBUG, ("Checking device state"));
+				(void)i2c_vl53l0x_check_device();
+			}
 		}
 	}
 	else
@@ -229,13 +290,13 @@ bool i2c_vl53l0x_init()
 
 	if (success)
 	{
-		memset(&device_comm_params, 0, sizeof(device_comm_params));
-		device_comm_params.I2cDevAddr = I2C_VL53L0X_DEVICE_ADDR;
-		device_comm_params.comms_type = I2C;
-		device_comm_params.comms_speed_khz = mgos_i2c_get_freq(i2c) / 1000; // Hz -> kHz
+		memset(&device_config, 0, sizeof(device_config));
+		device_config.I2cDevAddr = I2C_VL53L0X_DEVICE_ADDR;
+		device_config.comms_type = I2C;
+		device_config.comms_speed_khz = mgos_i2c_get_freq(i2c) / 1000; // Hz -> kHz
 
 		LOG(LL_DEBUG,
-				("I2C frequency is set to %d kHz", device_comm_params.comms_speed_khz));
+				("I2C frequency is set to %d kHz", device_config.comms_speed_khz));
 
 		// configure XSHUT pin.
 		const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
@@ -266,7 +327,7 @@ bool i2c_vl53l0x_init()
 	if (success)
 	{
 		// get device information
-		const VL53L0X_Error rv = VL53L0X_GetDeviceInfo(&device_comm_params,
+		const VL53L0X_Error rv = VL53L0X_GetDeviceInfo(&device_config,
 				&device_info);
 		success = (rv == VL53L0X_ERROR_NONE);
 		LOG_ON_ERR("Failed to get device info", rv);
@@ -284,7 +345,7 @@ bool i2c_vl53l0x_init()
 		LOG(LL_INFO,
 				("Device initialized (%s/%s/%s)", device_info.Name, device_info.Type, device_info.ProductId));
 		// Set device to sleep again!
-		success = i2c_vl53l0x_enable_device(false, true);
+//		success = i2c_vl53l0x_enable_device(false, true);
 	}
 	else
 	{
@@ -302,28 +363,26 @@ bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data)
 	if (success)
 	{
 		// turn on device
-		success = i2c_vl53l0x_enable_device(true, false);
-	}
-
-	if (success)
-	{
-		VL53L0X_Error rv = VL53L0X_PerformSingleMeasurement(
-				&device_comm_params);
-		success = (rv == VL53L0X_ERROR_NONE);
-		LOG_ON_ERR("Failed to perform a single measurement", rv);
+//		success = i2c_vl53l0x_enable_device(true, false);
 	}
 
 	VL53L0X_RangingMeasurementData_t temp_data;
 	if (success)
 	{
-		VL53L0X_Error rv = VL53L0X_GetRangingMeasurementData(
-				&device_comm_params, &temp_data);
+		VL53L0X_Error rv = VL53L0X_PerformSingleRangingMeasurement(
+				&device_config, &temp_data);
 		success = (rv == VL53L0X_ERROR_NONE);
-		LOG_ON_ERR("Failed to get ranging measurement data", rv);
+		LOG_ON_ERR("Failed to perform a single measurement", rv);
 	}
 
 	if (success)
 	{
+		LOG(LL_DEBUG, ("Single range measurement: MeasurementTimeUsec=%d, "
+				"RangeDMaxMilliMeter=%d, RangeMilliMeter=%d, RangeStatus=%d, TimeStamp=%d",
+				temp_data.MeasurementTimeUsec, temp_data.RangeDMaxMilliMeter,
+				temp_data.RangeMilliMeter, temp_data.RangeStatus,
+				temp_data.TimeStamp));
+
 		data->MeasurementTimeUsec = temp_data.MeasurementTimeUsec;
 		data->RangeDMaxMilliMeter = temp_data.RangeDMaxMilliMeter;
 		data->RangeMilliMeter = temp_data.RangeMilliMeter;
@@ -331,17 +390,17 @@ bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data)
 		data->TimeStamp = temp_data.TimeStamp;
 	}
 
-	success = (success && i2c_vl53l0x_enable_device(false, false));
+//	success = (success && i2c_vl53l0x_enable_device(false, false));
 
 	return success;
 }
 
 void i2c_vl53l0x_final()
 {
-	device_comm_params.I2cDevAddr = I2C_VL53L0X_DEVICE_ADDR_INVALID;
-	device_comm_params.comms_type = 0;
-	device_comm_params.comms_speed_khz = 0;
-	memset(&device_comm_params, 0, sizeof(device_comm_params));
+	device_config.I2cDevAddr = I2C_VL53L0X_DEVICE_ADDR_INVALID;
+	device_config.comms_type = 0;
+	device_config.comms_speed_khz = 0;
+	memset(&device_config, 0, sizeof(device_config));
 //	i2c_vl53l0x_enable_device(false);
 //	// disable interrupt handler
 //	const int gpio_int = mgos_sys_config_get_spark_gpio_vl53l0x_int();
