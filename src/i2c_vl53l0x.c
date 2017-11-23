@@ -333,13 +333,6 @@ bool i2c_vl53l0x_init()
 		LOG_ON_ERR("Failed to get device info", rv);
 	}
 
-	//	if (success)
-//	{
-//		// check current error state
-//		LOG(LL_DEBUG, ("Checking device state"));
-//		success = i2c_vl53l0x_check_device();
-//	}
-
 	if (success)
 	{
 		LOG(LL_INFO,
