@@ -9,6 +9,11 @@ mongoose_os_version: ${mos.version}
 
 platforms: [ esp8266 ]
 
+build_vars:
+#  MGOS_ENABLE_HEAP_LOG: 1
+#  MGOS_ENABLE_CALL_TRACE: 1
+  USE_I2C_2V8: 1
+  
 # Optional. List of tags for online search.
 tags:
   - spark

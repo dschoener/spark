@@ -38,27 +38,24 @@ static bool i2c_vl53l0x_is_device_initialized()
 
 bool i2c_vl53l0x_check_device()
 {
-	bool success = false;
 	VL53L0X_DeviceError device_err = VL53L0X_DEVICEERROR_NONE;
 	VL53L0X_Error rv = VL53L0X_GetDeviceErrorStatus(&device_comm_params,
 			&device_err);
 
 	LOG_ON_ERR("Failed to get device error status", rv);
+	bool success = (rv == VL53L0X_ERROR_NONE) && (device_err == VL53L0X_DEVICEERROR_NONE);
 
-	if (rv == VL53L0X_ERROR_NONE)
+	if (device_err != VL53L0X_DEVICEERROR_NONE)
 	{
-		if (device_err == VL53L0X_DEVICEERROR_NONE)
-		{
-			success = true;
-			LOG(LL_DEBUG, ("Device successfully checked"));
-		}
-		else
-		{
-			char str_err[512];
-			str_err[0] = '\0';
-			rv = VL53L0X_GetDeviceErrorString(device_err, (char*) &str_err);
-			LOG_ON_ERR("Failed to get device error string", rv);
-		}
+		char str_err[512];
+		str_err[0] = '\0';
+		rv = VL53L0X_GetDeviceErrorString(device_err, (char*) &str_err);
+		LOG_ON_ERR("Failed to get device error string", rv);
+		LOG(LL_ERROR, ("Device error (%d): %s", device_err, str_err));
+	}
+	else
+	{
+		LOG(LL_DEBUG, ("Device seems to run successfully"));
 	}
 
 	return success;
@@ -94,7 +91,16 @@ static bool i2c_vl53l0x_validate_test_register(uint8_t reg, uint16_t value, size
 	return success;
 }
 
-bool i2c_vl53l0x_enable_device(bool enable)
+static bool i2c_vl53l0x_validate_device()
+{
+	return i2c_vl53l0x_validate_test_register(0xC0, 0xEE,   1) &&
+		i2c_vl53l0x_validate_test_register(0xC1, 0xAA,   1) &&
+		i2c_vl53l0x_validate_test_register(0xC2, 0x10,   1) &&
+		i2c_vl53l0x_validate_test_register(0x51, 0x0099, 2) &&
+		i2c_vl53l0x_validate_test_register(0x61, 0x0000, 2);
+}
+
+bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 {
 	const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
 	const bool enabled = mgos_gpio_read(gpio_xshut);
@@ -108,20 +114,23 @@ bool i2c_vl53l0x_enable_device(bool enable)
 
 		if (enable)
 		{
-			// Wait until device has booted
-			if (success)
+			bool device_active = false;
+
+			for (int i = 5; (i > 0) && (!device_active); i--)
 			{
-				// wait until device comes up
-				// TODO is a workaround
-				mgos_usleep(40000);
-//				const VL53L0X_Error rv = VL53L0X_WaitDeviceBooted(
-//						&device_comm_params);
-//				success = (rv == VL53L0X_ERROR_NONE);
-//				LOG_ON_ERR("Failed to wait for device boot", rv);
+				mgos_usleep(5000);
+				device_active = i2c_vl53l0x_validate_device();
 			}
 
-			if (success)
+			if (!device_active)
 			{
+				success = false;
+				LOG(LL_ERROR, ("Device seems to be not active"));
+			}
+
+			if (success && on_reset)
+			{
+				LOG(LL_DEBUG, ("Data initialization"));
 				const VL53L0X_Error rv = VL53L0X_DataInit(&device_comm_params);
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to init device data", rv);
@@ -129,6 +138,7 @@ bool i2c_vl53l0x_enable_device(bool enable)
 
 			if (success)
 			{
+				LOG(LL_DEBUG, ("Static initialization"));
 				const VL53L0X_Error rv = VL53L0X_StaticInit(
 						&device_comm_params);
 				success = (rv == VL53L0X_ERROR_NONE);
@@ -137,6 +147,7 @@ bool i2c_vl53l0x_enable_device(bool enable)
 
 			if (success)
 			{
+				LOG(LL_DEBUG, ("Setting power mode"));
 				// set power mode
 				const VL53L0X_Error rv = VL53L0X_SetPowerMode(
 						&device_comm_params,
@@ -147,6 +158,7 @@ bool i2c_vl53l0x_enable_device(bool enable)
 
 			if (success)
 			{
+				LOG(LL_DEBUG, ("Setting device mode"));
 				const VL53L0X_Error rv = VL53L0X_SetDeviceMode(
 						&device_comm_params,
 						VL53L0X_DEVICEMODE_SINGLE_RANGING);
@@ -205,20 +217,7 @@ bool i2c_vl53l0x_init()
 
 	if (success)
 	{
-		success = i2c_vl53l0x_enable_device(true);
-	}
-
-	if (success)
-	{
-		success = i2c_vl53l0x_validate_test_register(0xC0, 0xEE,   1) &&
-			i2c_vl53l0x_validate_test_register(0xC1, 0xAA,   1) &&
-			i2c_vl53l0x_validate_test_register(0xC2, 0x10,   1) &&
-			i2c_vl53l0x_validate_test_register(0x51, 0x0099, 2) &&
-			i2c_vl53l0x_validate_test_register(0x61, 0x0000, 2);
-		if (!success)
-		{
-			LOG(LL_ERROR, ("Failed to validate VL53L0X test registers"));
-		}
+		success = i2c_vl53l0x_enable_device(true, true);
 	}
 
 	if (success)
@@ -230,18 +229,19 @@ bool i2c_vl53l0x_init()
 		LOG_ON_ERR("Failed to get device info", rv);
 	}
 
-	if (success)
-	{
-		// check current error state
-		success = i2c_vl53l0x_check_device();
-	}
+//	if (success)
+//	{
+//		// check current error state
+//		LOG(LL_DEBUG, ("Checking device state"));
+//		success = i2c_vl53l0x_check_device();
+//	}
 
 	if (success)
 	{
 		LOG(LL_INFO, ("Device initialized (%s/%s/%s)", device_info.Name,
 				device_info.Type, device_info.ProductId));
 		// Set device to sleep again!
-		success = i2c_vl53l0x_enable_device(false);
+		success = i2c_vl53l0x_enable_device(false, true);
 	}
 	else
 	{
@@ -259,7 +259,7 @@ bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data)
 	if (success)
 	{
 		// turn on device
-		success = i2c_vl53l0x_enable_device(true);
+		success = i2c_vl53l0x_enable_device(true, false);
 	}
 
 	if (success)
@@ -288,7 +288,7 @@ bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data)
 		data->TimeStamp = temp_data.TimeStamp;
 	}
 
-	success = (success && i2c_vl53l0x_enable_device(false));
+	success = (success && i2c_vl53l0x_enable_device(false, false));
 
 	return success;
 }

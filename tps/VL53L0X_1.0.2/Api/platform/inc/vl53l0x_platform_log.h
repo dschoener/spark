@@ -72,15 +72,16 @@ enum {
 
 
 #define _LOG_FUNCTION_START(module, fmt, ... ) \
-        LOG (LL_VERBOSE_DEBUG, ("<START> "fmt, ##__VA_ARGS__))
+        LOG (LL_VERBOSE_DEBUG, ("<START func='%s'/> "fmt, __FUNCTION__, ##__VA_ARGS__))
 
 #define _LOG_FUNCTION_END(module, status, ... )\
-		LOG (LL_VERBOSE_DEBUG, ("<END> status:%d\n", (int)status))
+		LOG (LL_VERBOSE_DEBUG, ("<END   func='%s' status=%d/>\n", __FUNCTION__, (int)status))
 
 #define _LOG_FUNCTION_END_FMT(module, status, fmt, ... )\
-		LOG (LL_VERBOSE_DEBUG, ("<END> status:%d "fmt, (int)status, ##__VA_ARGS__))
+		LOG (LL_VERBOSE_DEBUG, ("<END   func='%s' status=%d/>\n"fmt, __FUNCTION__, (int)status, ##__VA_ARGS__))
 
 #define VL53L0X_ErrLog( fmt, ...)  LOG(LL_ERROR, (fmt, ##__VA_ARGS__))
+#define VL53L0X_DebugLog( fmt, ...)  LOG(LL_DEBUG, (fmt, ##__VA_ARGS__))
 
 #else /* VL53L0X_LOG_ENABLE no logging */
     #define VL53L0X_ErrLog(...) (void)0

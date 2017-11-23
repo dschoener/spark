@@ -577,6 +577,66 @@ VL53L0X_Error VL53L0X_StaticInit(VL53L0X_DEV Dev)
 	ApertureSpads = VL53L0X_GETDEVICESPECIFICPARAMETER(Dev,
 		ReferenceSpadType);
 
+	/* Store pre-range vcsel period */
+	if (Status == VL53L0X_ERROR_NONE) {
+		Status = VL53L0X_GetVcselPulsePeriod(
+			Dev,
+			VL53L0X_VCSEL_PERIOD_PRE_RANGE,
+			&vcselPulsePeriodPCLK);
+	}
+
+	if (Status == VL53L0X_ERROR_NONE) {
+			VL53L0X_SETDEVICESPECIFICPARAMETER(
+				Dev,
+				PreRangeVcselPulsePeriod,
+				vcselPulsePeriodPCLK);
+	}
+
+	/* Store final-range vcsel period */
+	if (Status == VL53L0X_ERROR_NONE) {
+		Status = VL53L0X_GetVcselPulsePeriod(
+			Dev,
+			VL53L0X_VCSEL_PERIOD_FINAL_RANGE,
+			&vcselPulsePeriodPCLK);
+	}
+
+	if (Status == VL53L0X_ERROR_NONE) {
+			VL53L0X_SETDEVICESPECIFICPARAMETER(
+				Dev,
+				FinalRangeVcselPulsePeriod,
+				vcselPulsePeriodPCLK);
+	}
+
+	/* Store pre-range timeout */
+	if (Status == VL53L0X_ERROR_NONE) {
+		Status = get_sequence_step_timeout(
+			Dev,
+			VL53L0X_SEQUENCESTEP_PRE_RANGE,
+			&seqTimeoutMicroSecs);
+	}
+
+	if (Status == VL53L0X_ERROR_NONE) {
+		VL53L0X_SETDEVICESPECIFICPARAMETER(
+			Dev,
+			PreRangeTimeoutMicroSecs,
+			seqTimeoutMicroSecs);
+	}
+
+	/* Store final-range timeout */
+	if (Status == VL53L0X_ERROR_NONE) {
+		Status = get_sequence_step_timeout(
+			Dev,
+			VL53L0X_SEQUENCESTEP_FINAL_RANGE,
+			&seqTimeoutMicroSecs);
+	}
+
+	if (Status == VL53L0X_ERROR_NONE) {
+		VL53L0X_SETDEVICESPECIFICPARAMETER(
+			Dev,
+			FinalRangeTimeoutMicroSecs,
+			seqTimeoutMicroSecs);
+	}
+
 	/* NVM value invalid */
 	if ((ApertureSpads > 1) ||
 		((ApertureSpads == 1) && (count > 32)) ||
@@ -665,67 +725,6 @@ VL53L0X_Error VL53L0X_StaticInit(VL53L0X_DEV Dev)
 	if (Status == VL53L0X_ERROR_NONE)
 		PALDevDataSet(Dev, PalState, VL53L0X_STATE_IDLE);
 
-
-
-	/* Store pre-range vcsel period */
-	if (Status == VL53L0X_ERROR_NONE) {
-		Status = VL53L0X_GetVcselPulsePeriod(
-			Dev,
-			VL53L0X_VCSEL_PERIOD_PRE_RANGE,
-			&vcselPulsePeriodPCLK);
-	}
-
-	if (Status == VL53L0X_ERROR_NONE) {
-			VL53L0X_SETDEVICESPECIFICPARAMETER(
-				Dev,
-				PreRangeVcselPulsePeriod,
-				vcselPulsePeriodPCLK);
-	}
-
-	/* Store final-range vcsel period */
-	if (Status == VL53L0X_ERROR_NONE) {
-		Status = VL53L0X_GetVcselPulsePeriod(
-			Dev,
-			VL53L0X_VCSEL_PERIOD_FINAL_RANGE,
-			&vcselPulsePeriodPCLK);
-	}
-
-	if (Status == VL53L0X_ERROR_NONE) {
-			VL53L0X_SETDEVICESPECIFICPARAMETER(
-				Dev,
-				FinalRangeVcselPulsePeriod,
-				vcselPulsePeriodPCLK);
-	}
-
-	/* Store pre-range timeout */
-	if (Status == VL53L0X_ERROR_NONE) {
-		Status = get_sequence_step_timeout(
-			Dev,
-			VL53L0X_SEQUENCESTEP_PRE_RANGE,
-			&seqTimeoutMicroSecs);
-	}
-
-	if (Status == VL53L0X_ERROR_NONE) {
-		VL53L0X_SETDEVICESPECIFICPARAMETER(
-			Dev,
-			PreRangeTimeoutMicroSecs,
-			seqTimeoutMicroSecs);
-	}
-
-	/* Store final-range timeout */
-	if (Status == VL53L0X_ERROR_NONE) {
-		Status = get_sequence_step_timeout(
-			Dev,
-			VL53L0X_SEQUENCESTEP_FINAL_RANGE,
-			&seqTimeoutMicroSecs);
-	}
-
-	if (Status == VL53L0X_ERROR_NONE) {
-		VL53L0X_SETDEVICESPECIFICPARAMETER(
-			Dev,
-			FinalRangeTimeoutMicroSecs,
-			seqTimeoutMicroSecs);
-	}
 
 	LOG_FUNCTION_END(Status);
 	return Status;

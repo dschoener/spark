@@ -1,5 +1,5 @@
 /*******************************************************************************
- Copyright © 2016, STMicroelectronics International N.V.
+ Copyright ï¿½ 2016, STMicroelectronics International N.V.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -634,6 +634,8 @@ VL53L0X_Error perform_ref_signal_measurement(VL53L0X_DEV Dev,
 
 	uint8_t SequenceConfig = 0;
 
+	LOG_FUNCTION_START("");
+
 	/* store the value of the sequence config,
 	 * this will be reset before the end of the function
 	 */
@@ -670,6 +672,7 @@ VL53L0X_Error perform_ref_signal_measurement(VL53L0X_DEV Dev,
 			PALDevDataSet(Dev, SequenceConfig, SequenceConfig);
 	}
 
+	LOG_FUNCTION_END(status);
 	return status;
 }
 
@@ -697,6 +700,8 @@ VL53L0X_Error VL53L0X_perform_ref_spad_management(VL53L0X_DEV Dev,
 	uint8_t PhaseCal = 0;
 	uint32_t refSpadCount_int = 0;
 	uint8_t	 isApertureSpads_int = 0;
+
+	LOG_FUNCTION_START("");
 
 	/*
 	 * The reference SPAD initialization procedure determines the minimum
@@ -936,7 +941,7 @@ VL53L0X_Error VL53L0X_perform_ref_spad_management(VL53L0X_DEV Dev,
 		VL53L0X_SETDEVICESPECIFICPARAMETER(Dev,
 			ReferenceSpadType, *isApertureSpads);
 	}
-
+	LOG_FUNCTION_END(Status);
 	return Status;
 }
 
@@ -951,6 +956,7 @@ VL53L0X_Error VL53L0X_set_reference_spads(VL53L0X_DEV Dev,
 	uint32_t lastSpadIndex;
 	uint32_t index;
 
+	LOG_FUNCTION_START("");
 	/*
 	 * This function applies a requested number of reference spads, either
 	 * aperture or
@@ -1003,7 +1009,7 @@ VL53L0X_Error VL53L0X_set_reference_spads(VL53L0X_DEV Dev,
 		VL53L0X_SETDEVICESPECIFICPARAMETER(Dev,
 			ReferenceSpadType, isApertureSpads);
 	}
-
+	LOG_FUNCTION_END(Status);
 	return Status;
 }
 

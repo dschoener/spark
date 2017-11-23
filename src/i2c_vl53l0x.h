@@ -43,9 +43,10 @@ void i2c_vl53l0x_final();
 /**
  * Enables or disables the device to save power.
  * @param enable Indicates if the device should be enabled or disabled.
+ * @param on_reset Indicates if device should be enabled after device reset.
  * @return True if the device could be enabled or disabled.
  */
-bool i2c_vl53l0x_enable_device(bool enable);
+bool i2c_vl53l0x_enable_device(bool enable, bool on_reset);
 
 /**
  * Checks if the device error status has been set.
