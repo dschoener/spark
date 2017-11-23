@@ -1,7 +1,9 @@
 #include <mgos.h>
 #include <mgos_i2c.h>
+
 #include "i2c_vl53l0x.h"
 #include "i2c_tmp102.h"
+#include "system.h"
 
 #define LOG_INIT_STATE(SUCCESS, WHAT) if (SUCCESS) { \
 		LOG(LL_INFO, ("%s: successfully initialized", WHAT)); \
@@ -27,8 +29,6 @@ struct spark_measurement_info_t
 {
 	i2c_vl53l0x_ranging_measurement_data cur_distance;
 	i2c_vl53l0x_ranging_measurement_data prev_distance;
-	i2c_tmp102_temperature_t cur_temperature;
-	i2c_tmp102_temperature_t prev_temperature;
 };
 
 static struct spark_measurement_info_t spark_measurement_info;
@@ -52,14 +52,12 @@ static void cb_timeout_temperature(void *param)
 	(void)param;
 	LOG(LL_DEBUG, ("timeout elapsed for temperature sensor"));
 
-	i2c_tmp102_temperature_t data;
-	bool success = i2c_tmp102_get_temperature(&data);
+	temperature_t temp;
+	bool success = i2c_tmp102_get_temperature(&temp);
 
 	if (success)
 	{
-		spark_measurement_info.prev_temperature = spark_measurement_info.cur_temperature;
-		spark_measurement_info.cur_temperature = data;
-		LOG(LL_DEBUG, ("new data temperature: %2.1fC", data));
+		sys_set_temperature(temp);
 		mgos_set_timer(1, 0, cb_timeout_validate_data, NULL);
 	}
 }
@@ -95,8 +93,7 @@ static void cb_timeout_temperature(void *param)
 void spark_process_data()
 {
 	// if data has been changed
-	if ((spark_measurement_info.cur_distance.RangeMilliMeter != spark_measurement_info.prev_distance.RangeMilliMeter) ||
-		(spark_measurement_info.cur_temperature != spark_measurement_info.prev_temperature))
+	if ((spark_measurement_info.cur_distance.RangeMilliMeter != spark_measurement_info.prev_distance.RangeMilliMeter))
 	{
 		//TODO send data
 	}
@@ -141,14 +138,24 @@ enum mgos_app_init_result mgos_app_init(void)
 
 	if (success)
 	{
-		success = i2c_vl53l0x_init();
-		LOG_INIT_STATE(success, "distance sensor");
+		success = i2c_tmp102_init();
+		LOG_INIT_STATE(success, "temperature sensor");
 	}
 
 	if (success)
 	{
-		success = i2c_tmp102_init();
-		LOG_INIT_STATE(success, "temperature sensor");
+		temperature_t temp;
+		success = i2c_tmp102_get_temperature(&temp);
+		LOG_INIT_STATE(success, "request temperature");
+		if (success)
+		{
+			sys_set_temperature(temp);
+		}
+	}
+	if (success)
+	{
+		success = i2c_vl53l0x_init();
+		LOG_INIT_STATE(success, "distance sensor");
 	}
 
 	if (success)

@@ -10,25 +10,38 @@
 
 #include <mgos.h>
 
-typedef struct {
-	uint32_t TimeStamp;		/*!< 32-bit time stamp. */
+#include "types.h"
+
+typedef struct
+{
+	uint32_t TimeStamp; /*!< 32-bit time stamp. */
 	uint32_t MeasurementTimeUsec;
-		/*!< Give the Measurement time needed by the device to do the
-		 * measurement.*/
+	/*!< Give the Measurement time needed by the device to do the
+	 * measurement.*/
 
-
-	uint16_t RangeMilliMeter;	/*!< range distance in millimeter. */
+	uint16_t RangeMilliMeter; /*!< range distance in millimeter. */
 
 	uint16_t RangeDMaxMilliMeter;
-		/*!< Tells what is the maximum detection distance of the device
-		 * in current setup and environment conditions (Filled when
-		 *	applicable) */
-
+	/*!< Tells what is the maximum detection distance of the device
+	 * in current setup and environment conditions (Filled when
+	 *	applicable) */
 	uint8_t RangeStatus;
-		/*!< Range Status for the current measurement. This is device
-		 *	dependent. Value = 0 means value is valid.
-		 *	See \ref RangeStatusPage */
+
+	/*!< Range Status for the current measurement. This is device
+	 *	dependent. Value = 0 means value is valid.
+	 *	See \ref RangeStatusPage */
 } i2c_vl53l0x_ranging_measurement_data;
+
+typedef struct
+{
+	temperature_t Temperature;
+	bool NeedsCalibration;
+	uint32_t RefSpadCount;
+	uint8_t IsApertureSpads;
+	uint8_t VhvSettings;
+	uint8_t PhaseCalibration;
+
+} i2c_vl53l0x_calibration_info;
 
 /**
  * Initializes the VL53L0X device I2C communication.

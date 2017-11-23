@@ -9,10 +9,9 @@
 #define SRC_I2C_TMP102_H_
 
 #include "i2c_tmp102.h"
+#include "types.h"
 
 #include <mgos.h>
-
-typedef float i2c_tmp102_temperature_t;
 
 /**
  * Initializes the TMP102 device I2C communication.
@@ -27,6 +26,6 @@ void i2c_tmp102_final();
 /**
  * Returns a new temperature value.
  */
-bool i2c_tmp102_get_temperature(i2c_tmp102_temperature_t * temp);
+bool i2c_tmp102_get_temperature(temperature_t * temp);
 
 #endif /* SRC_I2C_TMP102_H_ */

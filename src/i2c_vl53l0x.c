@@ -6,6 +6,7 @@
  */
 
 #include "i2c_vl53l0x.h"
+#include "system.h"
 
 #include <mgos_i2c.h>
 #include <vl53l0x_platform.h>
@@ -18,6 +19,8 @@ const uint8_t I2C_VL53L0X_DEVICE_ADDR_INVALID = 0;
 
 static VL53L0X_Dev_t device_comm_params;
 static VL53L0X_DeviceInfo_t device_info;
+static i2c_vl53l0x_calibration_info device_calibration =
+{ true, 0, 0, true, 0, 0 };
 
 #define LOG_ON_ERR(STR, ERR) if ((ERR) != VL53L0X_ERROR_NONE){ \
 	char str[64]; \
@@ -43,7 +46,8 @@ bool i2c_vl53l0x_check_device()
 			&device_err);
 
 	LOG_ON_ERR("Failed to get device error status", rv);
-	bool success = (rv == VL53L0X_ERROR_NONE) && (device_err == VL53L0X_DEVICEERROR_NONE);
+	bool success = (rv == VL53L0X_ERROR_NONE)
+			&& (device_err == VL53L0X_DEVICEERROR_NONE);
 
 	if (device_err != VL53L0X_DEVICEERROR_NONE)
 	{
@@ -66,15 +70,16 @@ static bool i2c_vl53l0x_read(uint8_t reg, uint8_t * data, size_t len)
 	struct mgos_i2c * i2c = mgos_i2c_get_global();
 	assert(i2c != NULL);
 
-	return mgos_i2c_write(i2c, I2C_VL53L0X_DEVICE_ADDR, &reg, sizeof(reg), true) &&
-		mgos_i2c_read(i2c, I2C_VL53L0X_DEVICE_ADDR, data, len, true);
+	return mgos_i2c_write(i2c, I2C_VL53L0X_DEVICE_ADDR, &reg, sizeof(reg), true)
+			&& mgos_i2c_read(i2c, I2C_VL53L0X_DEVICE_ADDR, data, len, true);
 }
 
-static bool i2c_vl53l0x_validate_test_register(uint8_t reg, uint16_t value, size_t len)
+static bool i2c_vl53l0x_validate_test_register(uint8_t reg, uint16_t value,
+		size_t len)
 {
 	assert(len <= 2);
 	uint16_t readValue = 0x0000;
-	bool success = i2c_vl53l0x_read(reg, (uint8_t*)&readValue, len);
+	bool success = i2c_vl53l0x_read(reg, (uint8_t*) &readValue, len);
 	if (success)
 	{
 		if (len == 2)
@@ -85,7 +90,8 @@ static bool i2c_vl53l0x_validate_test_register(uint8_t reg, uint16_t value, size
 		success = (readValue == value);
 		if (!success)
 		{
-			LOG(LL_ERROR, ("Register validation failed: %x != %x", readValue, value));
+			LOG(LL_ERROR,
+					("Register validation failed: %x != %x", readValue, value));
 		}
 	}
 	return success;
@@ -93,11 +99,11 @@ static bool i2c_vl53l0x_validate_test_register(uint8_t reg, uint16_t value, size
 
 static bool i2c_vl53l0x_validate_device()
 {
-	return i2c_vl53l0x_validate_test_register(0xC0, 0xEE,   1) &&
-		i2c_vl53l0x_validate_test_register(0xC1, 0xAA,   1) &&
-		i2c_vl53l0x_validate_test_register(0xC2, 0x10,   1) &&
-		i2c_vl53l0x_validate_test_register(0x51, 0x0099, 2) &&
-		i2c_vl53l0x_validate_test_register(0x61, 0x0000, 2);
+	return i2c_vl53l0x_validate_test_register(0xC0, 0xEE, 1)
+			&& i2c_vl53l0x_validate_test_register(0xC1, 0xAA, 1)
+			&& i2c_vl53l0x_validate_test_register(0xC2, 0x10, 1)
+			&& i2c_vl53l0x_validate_test_register(0x51, 0x0099, 2)
+			&& i2c_vl53l0x_validate_test_register(0x61, 0x0000, 2);
 }
 
 bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
@@ -145,6 +151,37 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 				LOG_ON_ERR("Failed to static init device", rv);
 			}
 
+			if (success && device_calibration.NeedsCalibration)
+			{
+				LOG(LL_DEBUG, ("Performing SPAD calibration"));
+				const VL53L0X_Error rv = VL53L0X_PerformRefSpadManagement(
+						&device_comm_params, &device_calibration.RefSpadCount,
+						&device_calibration.IsApertureSpads);
+				success = (rv == VL53L0X_ERROR_NONE);
+				LOG_ON_ERR("Failed to perform SPAD calibration", rv);
+				if (success)
+				{
+					LOG(LL_DEBUG, ("SPAD calibration: SpadCount=%d, IsApertureSpads=%d",
+							device_calibration.RefSpadCount, device_calibration.IsApertureSpads));
+				}
+			}
+
+			if (success && device_calibration.NeedsCalibration)
+			{
+				LOG(LL_DEBUG, ("Performing refernce calibration"));
+				const VL53L0X_Error rv = VL53L0X_PerformRefCalibration(
+						&device_comm_params, &device_calibration.VhvSettings,
+						&device_calibration.PhaseCalibration);
+				success = (rv == VL53L0X_ERROR_NONE);
+				LOG_ON_ERR("Failed to perform reference calibration", rv);
+				if (success)
+				{
+					LOG(LL_DEBUG, ("Reference calibration: VhvSettings=%d, PhaseCalibration=%d",
+							device_calibration.VhvSettings, device_calibration.PhaseCalibration));
+					device_calibration.Temperature = sys_get_temperature();
+				}
+			}
+
 			if (success)
 			{
 				LOG(LL_DEBUG, ("Setting power mode"));
@@ -165,6 +202,11 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 				success = (rv == VL53L0X_ERROR_NONE);
 				LOG_ON_ERR("Failed to set device mode", rv);
 			}
+
+//			if (success)
+//			{
+//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(Dev, LimitCheckId, LimitCheckEnable);
+//			}
 		}
 	}
 	else
@@ -192,7 +234,8 @@ bool i2c_vl53l0x_init()
 		device_comm_params.comms_type = I2C;
 		device_comm_params.comms_speed_khz = mgos_i2c_get_freq(i2c) / 1000; // Hz -> kHz
 
-		LOG(LL_DEBUG, ("I2C frequency is set to %d kHz", device_comm_params.comms_speed_khz));
+		LOG(LL_DEBUG,
+				("I2C frequency is set to %d kHz", device_comm_params.comms_speed_khz));
 
 		// configure XSHUT pin.
 		const int gpio_xshut = mgos_sys_config_get_spark_gpio_vl53l0x_xshut();
@@ -229,7 +272,7 @@ bool i2c_vl53l0x_init()
 		LOG_ON_ERR("Failed to get device info", rv);
 	}
 
-//	if (success)
+	//	if (success)
 //	{
 //		// check current error state
 //		LOG(LL_DEBUG, ("Checking device state"));
@@ -238,8 +281,8 @@ bool i2c_vl53l0x_init()
 
 	if (success)
 	{
-		LOG(LL_INFO, ("Device initialized (%s/%s/%s)", device_info.Name,
-				device_info.Type, device_info.ProductId));
+		LOG(LL_INFO,
+				("Device initialized (%s/%s/%s)", device_info.Name, device_info.Type, device_info.ProductId));
 		// Set device to sleep again!
 		success = i2c_vl53l0x_enable_device(false, true);
 	}
