@@ -16,6 +16,7 @@
 
 const uint8_t I2C_VL53L0X_DEVICE_ADDR = 0x29;
 const uint8_t I2C_VL53L0X_DEVICE_ADDR_INVALID = 0;
+const float MAX_RANGE = 2000.0f; // mm
 
 static VL53L0X_Dev_t device_config;
 static VL53L0X_DeviceInfo_t device_info;
@@ -226,40 +227,59 @@ bool i2c_vl53l0x_enable_device(bool enable, bool on_reset)
 				LOG_ON_ERR("Failed to set device mode", rv);
 			}
 
-//			if (success)
-//			{
-//				LOG(LL_DEBUG, ("Set power mode"));
-//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
-//						VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
-//				success = (rv == VL53L0X_ERROR_NONE);
-//				LOG_ON_ERR("Failed to enable sigma limit check", rv);
-//			}
-//
-//			if (success)
-//			{
-//				LOG(LL_DEBUG, ("Enable sigma limit check value"));
-//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckValue(&device_config,
-//						VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, float_to_fixpoint1616(2000));
-//				success = (rv == VL53L0X_ERROR_NONE);
-//				LOG_ON_ERR("Failed to enable sigma limit check value", rv);
-//			}
-//
+			if (success)
+			{
+				LOG(LL_DEBUG, ("Enable sigma limit check"));
+				VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
+				VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+				success = (rv == VL53L0X_ERROR_NONE);
+				LOG_ON_ERR("Failed to enable sigma limit check", rv);
+				if (success)
+				{
+					const FixPoint1616_t value = float_to_fixpoint1616(
+							MAX_RANGE);
+					LOG(LL_DEBUG,
+							("Set sigma limit check value: %fmm", fixpoint1616_to_float(
+									value)));
+					VL53L0X_Error rv = VL53L0X_SetLimitCheckValue(
+							&device_config,
+							VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, value);
+					success = (rv == VL53L0X_ERROR_NONE);
+					LOG_ON_ERR("Failed to set sigma limit check value", rv);
+				}
+			}
+
+			if (success)
+			{
+				uint8_t enabled = 0;
+				(void) VL53L0X_GetLimitCheckEnable(&device_config,
+						VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, &enabled);
+				LOG(LL_DEBUG, ("Signal rate limit check enabled: %s", ((enabled) ? "true" : "false")));
+				FixPoint1616_t value = 0;
+				(void) VL53L0X_GetLimitCheckValue(&device_config,
+										VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, &value);
+				LOG(LL_DEBUG, ("Signal rate limit check value: %08x", value));
+			}
+
 //			if (success)
 //			{
 //				LOG(LL_DEBUG, ("Enable signal rate limit check"));
-//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
-//						VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
+//				VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
+//				VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
 //				success = (rv == VL53L0X_ERROR_NONE);
 //				LOG_ON_ERR("Failed to enable signal rate limit check", rv);
-//			}
-//
-//			if (success)
-//			{
-//				LOG(LL_DEBUG, ("Enable range ignore threshold limit check"));
-//				const VL53L0X_Error rv = VL53L0X_SetLimitCheckEnable(&device_config,
-//						VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, 1);
-//				success = (rv == VL53L0X_ERROR_NONE);
-//				LOG_ON_ERR("Failed to enable range ignore threshold limit check", rv);
+//				if (success)
+//				{
+//					const FixPoint1616_t value = 0x00200000;
+//					LOG(LL_DEBUG,
+//							("Set signal rate limit check value: %fMPCS", fixpoint1616_to_float(
+//									value)));
+//					VL53L0X_Error rv = VL53L0X_SetLimitCheckValue(
+//							&device_config,
+//							VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, value);
+//					success = (rv == VL53L0X_ERROR_NONE);
+//					LOG_ON_ERR("Failed to set signal rate limit check value", rv);
+//				}
 //			}
 
 			if (success)
