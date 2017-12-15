@@ -42,14 +42,18 @@ config_schema:
  - ["spark.gpio_vl53l0x_xshut", "i",     2, {title: "VL53L0X XSHUT pin"}]
  - ["spark.gpio_vl53l0x_int",   "i",     0, {title: "VL53L0X interrupt pin"}]
  - ["spark.gpio_tmp102_alt",    "i",    14, {title: "TMP102 ALT pin"}]
- - ["spark.timeout_temp",       "i", 10000, {title: "timeout for temperature measurement in milliseconds"}]
- - ["spark.timeout_dist",       "i",  5000, {title: "timeout for distance measurement in milliseconds"}]
+ - ["spark.timeout_measurement","i", 10000, {title: "timeout for new range measurement in milliseconds"}]
+ - ["spark.timeout_max_alive",  "i", 60000, {title: "timeout until an alive signal has to be sent in milliseconds"}]
  - ["spark.threshold_dist",     "i",   100, {title: "distance threshold in millimeters"}]
  
  - ["i2c.enable",   true]
  - ["i2c.sda_gpio", 4]
  - ["i2c.scl_gpio", 5]
  
+ - ["wifi.sta.enable", true]
+ - ["wifi.sta.ssid",   ""]
+ - ["wifi.sta.pass",   ""]
+  
  - ["debug.level",  3]
  
 # List of libraries used by this app, in order of initialisation
@@ -61,7 +65,7 @@ libs:
   - origin: https://github.com/mongoose-os-libs/rpc-uart
   - origin: https://github.com/mongoose-os-libs/wifi
   - origin: https://github.com/mongoose-os-libs/i2c
-#  - origin: https://github.com/mongoose-os-libs/mqtt
+  - origin: https://github.com/mongoose-os-libs/mqtt
 #  - origin: https://github.com/mongoose-os-libs/adc
 
 # Used by the mos tool to catch mos binaries incompatible with this file format

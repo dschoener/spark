@@ -12,7 +12,7 @@
  * Global temperature type definition.
  * Units: Celcius degree.
  */
-typedef float temperature_t;
+typedef float sys_temperature;
 
 
 #endif /* SRC_TYPES_H_ */

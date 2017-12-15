@@ -109,7 +109,7 @@ void i2c_tmp102_final()
 
 }
 
-bool i2c_tmp102_get_temperature(temperature_t * temp)
+bool i2c_tmp102_get_temperature(sys_temperature * temp)
 {
 	const uint16_t default_config_reg = I2C_TMP102_DEF_CONFIG_REG;
 	// make one-shot

@@ -10,10 +10,10 @@
 #include <mgos.h>
 #include <math.h>
 
-static temperature_t current_temperature = NAN;
-static temperature_t previous_temperature = NAN;
+static sys_temperature current_temperature = NAN;
+static sys_temperature previous_temperature = NAN;
 
-temperature_t sys_get_temperature()
+sys_temperature sys_get_temperature()
 {
 	return current_temperature;
 }
@@ -21,7 +21,7 @@ temperature_t sys_get_temperature()
 /**
  * Sets a new system temperature;
  */
-void sys_set_temperature(temperature_t temp)
+void sys_set_temperature(sys_temperature temp)
 {
 	LOG(LL_DEBUG, ("new data temperature: %2.1fC", temp));
 	previous_temperature = current_temperature;

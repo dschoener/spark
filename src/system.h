@@ -14,11 +14,16 @@
 /**
  * Returns the system temperature.
  */
-temperature_t sys_get_temperature();
+sys_temperature sys_get_temperature();
 
 /**
  * Sets a new system temperature;
  */
-void sys_set_temperature(temperature_t temp);
+void sys_set_temperature(sys_temperature temp);
+
+/**
+ * Returns the product id
+ */
+const char* sys_get_product_id();
 
 #endif /* SRC_SYSTEM_H_ */

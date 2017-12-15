@@ -15,27 +15,37 @@
 
 typedef struct
 {
-	uint32_t TimeStamp; /*!< 32-bit time stamp. */
-	uint32_t MeasurementTimeUsec;
-	/*!< Give the Measurement time needed by the device to do the
-	 * measurement.*/
+	/**
+	 * 32-bit time stamp.
+	 */
+	uint32_t timestamp;
+	/**
+	 * Give the Measurement time needed by the device to do the measurement.
+	 */
+	uint32_t measurement_time_usec;
 
-	uint16_t RangeMilliMeter; /*!< range distance in millimeter. */
+	/**
+	 * Range distance in millimeter.
+	 */
+	uint16_t range_mm;
 
-	uint16_t RangeDMaxMilliMeter;
-	/*!< Tells what is the maximum detection distance of the device
-	 * in current setup and environment conditions (Filled when
-	 *	applicable) */
-	uint8_t RangeStatus;
+	/**
+	 * Tells what is the maximum detection distance of the device
+	 * in current setup and environment conditions (Filled when applicable).
+	 */
+	uint16_t max_range_mm;
 
-	/*!< Range Status for the current measurement. This is device
-	 *	dependent. Value = 0 means value is valid.
-	 *	See \ref RangeStatusPage */
-} i2c_vl53l0x_ranging_measurement_data;
+	/**
+	 * Range Status for the current measurement. This is device
+	 * dependent. Value = 0 means value is valid.
+	 */
+	uint8_t status;
+
+} i2c_vl53l0x_range_measurement_data;
 
 typedef struct
 {
-	temperature_t Temperature;
+	sys_temperature Temperature;
 	bool NeedsCalibration;
 	uint32_t RefSpadCount;
 	uint8_t IsApertureSpads;
@@ -71,6 +81,6 @@ bool i2c_vl53l0x_check_device();
 /**
  * Starts a new range measurement
  */
-bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data);
+bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_range_measurement_data * data);
 
 #endif /* SRC_I2C_VL53L0X_H_ */

@@ -26,6 +26,6 @@ void i2c_tmp102_final();
 /**
  * Returns a new temperature value.
  */
-bool i2c_tmp102_get_temperature(temperature_t * temp);
+bool i2c_tmp102_get_temperature(sys_temperature * temp);
 
 #endif /* SRC_I2C_TMP102_H_ */

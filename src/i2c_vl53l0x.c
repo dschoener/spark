@@ -369,7 +369,7 @@ bool i2c_vl53l0x_init()
 	return success;
 }
 
-bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data)
+bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_range_measurement_data * data)
 {
 	bool success = i2c_vl53l0x_is_device_initialized();
 
@@ -396,11 +396,11 @@ bool i2c_vl53l0x_get_new_range(i2c_vl53l0x_ranging_measurement_data * data)
 				temp_data.RangeMilliMeter, temp_data.RangeStatus,
 				temp_data.TimeStamp));
 
-		data->MeasurementTimeUsec = temp_data.MeasurementTimeUsec;
-		data->RangeDMaxMilliMeter = temp_data.RangeDMaxMilliMeter;
-		data->RangeMilliMeter = temp_data.RangeMilliMeter;
-		data->RangeStatus = temp_data.RangeStatus;
-		data->TimeStamp = temp_data.TimeStamp;
+		data->measurement_time_usec = temp_data.MeasurementTimeUsec;
+		data->max_range_mm = temp_data.RangeDMaxMilliMeter;
+		data->range_mm = temp_data.RangeMilliMeter;
+		data->status = temp_data.RangeStatus;
+		data->timestamp = temp_data.TimeStamp;
 	}
 
 //	success = (success && i2c_vl53l0x_enable_device(false, false));
