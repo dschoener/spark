@@ -6,8 +6,9 @@ This is the Mongoose OS app Spark.
 
 ## How to build this app
 
+The required mongoose-os version is 1.22 now!
 ```
-# mos --arch esp8266 --local
+# mos --arch esp8266
 ```
 
 ## How to install this app
