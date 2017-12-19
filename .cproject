@@ -27,6 +27,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/spark/build/gen}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.19.6/mongoose-os-1.19.6/fw/src"/>
 									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.19.6/mongoose-os-1.19.6"/>
+									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.22/mongoose-os-1.22/common"/>
+									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.22/mongoose-os-1.22/fw/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1035323929" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -37,6 +39,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/spark/build/gen}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.19.6/mongoose-os-1.19.6/fw/src"/>
 									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.19.6/mongoose-os-1.19.6"/>
+									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.22/mongoose-os-1.22/common"/>
+									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.22/mongoose-os-1.22/fw/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1997836480" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -50,8 +54,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.release.2042149512" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release">
 								<option id="gnu.both.asm.option.include.paths.1137344705" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/spark/build/gen}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.19.6/mongoose-os-1.19.6/fw/src"/>
-									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.19.6/mongoose-os-1.19.6"/>
+									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.22/mongoose-os-1.22/common"/>
+									<listOptionValue builtIn="false" value="/home/denis/.mos/modules-1.22/mongoose-os-1.22/fw/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1540356766" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>

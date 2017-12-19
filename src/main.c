@@ -19,38 +19,8 @@ enum mgos_app_init_result mgos_app_init(void)
 {
 	LOG(LL_DEBUG, ("init spark app"));
 
-	bool success = (MGOS_INIT_OK == mgos_gpio_init());
-	LOG_INIT_STATE(success, "GPIO interface");
-
-	if (success)
-	{
-		success = (MGOS_INIT_OK == mgos_timers_init());
-		LOG_INIT_STATE(success, "System timers");
-	}
-
-	if (success)
-	{
-		success = mgos_i2c_init();
-		LOG_INIT_STATE(success, "I2C interface");
-	}
-
-	if (success)
-	{
-		success = mgos_mqtt_init();
-		LOG_INIT_STATE(success, "MQTT interface");
-	}
-
-//	if (success)
-//	{
-//		success = mgos_wifi_init();
-//		LOG_INIT_STATE(success, "Wifi interface");
-//	}
-
-	if (success)
-	{
-		success = i2c_tmp102_init();
-		LOG_INIT_STATE(success, "Temperature sensor");
-	}
+	bool success = i2c_tmp102_init();
+	LOG_INIT_STATE(success, "Temperature sensor");
 
 	if (success)
 	{

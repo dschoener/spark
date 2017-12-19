@@ -7,7 +7,7 @@ libs_version: ${mos.version}
 modules_version: ${mos.version}
 mongoose_os_version: ${mos.version}
 
-platforms: [ esp8266 ]
+platforms: [ esp8266, esp32 ]
 
 build_vars:
 #  MGOS_ENABLE_HEAP_LOG: 1
@@ -45,16 +45,17 @@ config_schema:
  - ["spark.timeout_measurement","i", 10000, {title: "timeout for new range measurement in milliseconds"}]
  - ["spark.timeout_max_alive",  "i", 60000, {title: "timeout until an alive signal has to be sent in milliseconds"}]
  - ["spark.threshold_dist",     "i",   100, {title: "distance threshold in millimeters"}]
+ - ["spark.mqtt_topic",         "s", "spark_range", {title: "topic to distribute MQTT messages"}]
  
- - ["i2c.enable",   true]
- - ["i2c.sda_gpio", 4]
- - ["i2c.scl_gpio", 5]
+ - ["i2c.enable",      true]
+ - ["i2c.sda_gpio",    4]
+ - ["i2c.scl_gpio",    5]
  
  - ["wifi.sta.enable", true]
- - ["wifi.sta.ssid",   ""]
- - ["wifi.sta.pass",   ""]
   
- - ["debug.level",  3]
+ - ["mqtt.enable",     true]
+ 
+ - ["debug.level",     3]
  
 # List of libraries used by this app, in order of initialisation
 libs:

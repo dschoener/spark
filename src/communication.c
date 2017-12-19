@@ -59,8 +59,10 @@ static bool com_send_last_data()
 
 	if (success)
 	{
-		LOG(LL_DEBUG, ("Sending new range data: %s", message));
-		success = mgos_mqtt_pub("spark_com", message, len, 0, false);
+		const char* topic = mgos_sys_config_get_spark_mqtt_topic();
+		assert(topic != NULL);
+		LOG(LL_DEBUG, ("Sending new range data: %s:%s", topic, message));
+		success = mgos_mqtt_pub(topic, message, len, 0, false);
 	}
 
 
