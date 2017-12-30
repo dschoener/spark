@@ -34,14 +34,13 @@ static size_t com_create_message(char * buf, size_t size)
 	const double now = cs_time();
 	const size_t written = snprintf(buf, size, "{ "
 			"\"time\": %06.3f,"
-			"\"device-id\": \"%s\","
 			"\"measurement\": {"
 			"\"temperature\": %2.1f,"
+			"\"rangeData\": {"
 			"\"range\": %d,"
-			"\"max-range\": %d,"
-			"\"range-status\": %d"
-			"}}", now,
-			mgos_sys_config_get_device_id(),
+			"\"max\": %d,"
+			"\"status\": %d"
+			"}}}", now,
 			sys_get_temperature(),
 			s_current_range_measurement_data.range_mm,
 			s_current_range_measurement_data.max_range_mm,
@@ -53,18 +52,23 @@ static size_t com_create_message(char * buf, size_t size)
 static bool com_send_last_data()
 {
 	char message[1048];
+	char topic[256];
 
 	const size_t len = com_create_message(message, sizeof(message));
 	bool success = (len < sizeof(message));
 
 	if (success)
 	{
-		const char* topic = mgos_sys_config_get_spark_mqtt_topic();
-		assert(topic != NULL);
-		LOG(LL_DEBUG, ("Sending new range data: %s:%s", topic, message));
-		success = mgos_mqtt_pub(topic, message, len, 0, false);
+		const size_t len2 = snprintf(topic, sizeof(topic), "/devices/%s/events",
+				mgos_sys_config_get_device_id());
+		success = (len2 < sizeof(topic));
 	}
 
+	if (success)
+	{
+		LOG(LL_DEBUG, ("Sending new range message: %s:%s", topic, message));
+		success = mgos_mqtt_pub(topic, message, len, 0, false);
+	}
 
 	if (!success)
 	{
