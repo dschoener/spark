@@ -19,3 +19,16 @@ The required mongoose-os version is 1.22 now!
 <p align="center">
   <img src="https://mongoose-os.com/images/app1.gif" width="75%">
 </p>
+
+## Setup device side
+Setup WiFi:
+
+```
+# mos wifi WIFI_NETWORK_NAME WIFI_PASSWORD
+```
+
+Register device on Google IoT Core. If a device is already registered, this command deletes it, then registers again:
+
+```
+# mos gcp-iot-setup --gcp-project YOUR_PROJECT_NAME --gcp-region europe-west1 --gcp-registry iot-registry
+```

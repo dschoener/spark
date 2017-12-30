@@ -45,15 +45,16 @@ config_schema:
  - ["spark.timeout_measurement","i", 10000, {title: "timeout for new range measurement in milliseconds"}]
  - ["spark.timeout_max_alive",  "i", 60000, {title: "timeout until an alive signal has to be sent in milliseconds"}]
  - ["spark.threshold_dist",     "i",   100, {title: "distance threshold in millimeters"}]
- - ["spark.mqtt_topic",         "s", "spark_range", {title: "topic to distribute MQTT messages"}]
+ - ["spark.mqtt_topic",         "s", "range_data", {title: "topic to distribute MQTT messages"}]
  
  - ["i2c.enable",      true]
  - ["i2c.sda_gpio",    4]
  - ["i2c.scl_gpio",    5]
  
  - ["wifi.sta.enable", true]
-  
+ 
  - ["mqtt.enable",     true]
+ - ["gcp.enable",      true]
  
  - ["debug.level",     3]
  
